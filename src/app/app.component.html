@@ -1,0 +1,490 @@
+<div class="min-h-screen">
+  <header class="border-b border-slate-800 bg-slate-950 text-white">
+    <div class="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-10">
+      <div class="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <span class="inline-flex rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-200">
+            COM-254 · Métodos Numéricos · Integración numérica
+          </span>
+          <h1 class="mt-4 max-w-4xl text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+            Integración numérica aplicada a problemas de ingeniería
+          </h1>
+          <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+            Resolución interactiva de los ejercicios 19 al 27 mediante trapecio compuesto,
+            Simpson 1/3, Simpson 3/8 y combinaciones compatibles. Todos los datos y parámetros
+            relevantes pueden modificarse para estudiar el comportamiento de los métodos.
+          </p>
+        </div>
+
+        <div class="grid w-full gap-2 sm:grid-cols-2 lg:w-auto lg:min-w-[410px]">
+          <button class="btn-ghost" type="button" (click)="openModal('methods')">Métodos</button>
+          <button class="btn-ghost" type="button" (click)="openModal('validation')">Validación</button>
+          <button class="btn-ghost" type="button" (click)="openModal('exercise')">Sobre el ejercicio</button>
+          <button class="btn-ghost" type="button" (click)="openModal('limitations')">Limitaciones</button>
+        </div>
+      </div>
+
+      <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Colección</p>
+          <p class="mt-1 text-2xl font-black text-white">9 ejercicios</p>
+          <p class="mt-1 text-xs text-slate-400">Del 19 al 27</p>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Ejercicio activo</p>
+          <p class="mt-1 text-2xl font-black text-white">N.º {{ current.id }}</p>
+          <p class="mt-1 truncate text-xs text-slate-400">{{ current.shortTitle }}</p>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Método activo</p>
+          <p class="mt-1 text-lg font-black text-teal-300">{{ methodLabel }}</p>
+          <p class="mt-1 text-xs text-slate-400">{{ dataStatus }}</p>
+        </div>
+        <div class="rounded-2xl border border-teal-400/30 bg-teal-400/10 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-teal-200">Resultado actual</p>
+          <p class="mt-1 text-2xl font-black text-white">{{ format(currentValue) }}</p>
+          <p class="mt-1 text-xs text-teal-100">{{ currentResultUnit }}</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl space-y-7 px-5 py-8 lg:px-8 lg:py-10">
+    <section class="card overflow-hidden">
+      <div class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p class="kicker">Navegación</p>
+            <h2 class="section-title mt-1">Seleccionar problema</h2>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let exercise of exercises; trackBy: trackByExercise"
+              type="button"
+              class="h-9 min-w-9 rounded-lg border px-3 text-sm font-black transition"
+              [ngClass]="exercise.id === current.id ? 'border-teal-700 bg-teal-700 text-white shadow-sm' : 'border-slate-300 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700'"
+              (click)="selectExercise(exercise.id)">
+              {{ exercise.id }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="grid gap-4 p-5 sm:p-6 lg:grid-cols-[auto_1fr_auto] lg:items-end">
+        <button class="btn-secondary" type="button" (click)="previousExercise()">← Anterior</button>
+        <div>
+          <label class="label">Ejercicio</label>
+          <select class="data-input" [(ngModel)]="activeId" (ngModelChange)="selectExercise($event)">
+            <option *ngFor="let exercise of exercises; trackBy: trackByExercise" [ngValue]="exercise.id">
+              {{ exercise.id }} · {{ exercise.shortTitle }}
+            </option>
+          </select>
+        </div>
+        <button class="btn-secondary" type="button" (click)="nextExercise()">Siguiente →</button>
+      </div>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-[1.35fr_0.85fr]">
+      <article class="card overflow-hidden">
+        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="badge bg-teal-100 text-teal-800">Ejercicio {{ current.id }}</span>
+            <span class="badge bg-indigo-100 text-indigo-800">{{ current.area }}</span>
+            <span class="badge bg-slate-200 text-slate-700">{{ current.kind === 'table' ? 'Datos tabulados' : 'Función matemática' }}</span>
+          </div>
+          <h2 class="section-title mt-2">{{ current.title }}</h2>
+        </div>
+        <div class="space-y-5 p-5 sm:p-6">
+          <p class="text-sm leading-7 text-slate-600">{{ current.context }}</p>
+
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div class="metric-card">
+              <p class="label">Variable</p>
+              <p class="math text-lg font-bold text-slate-900">{{ current.variable }}</p>
+              <p class="mt-1 text-xs text-slate-500">{{ current.xLabel }} ({{ current.xUnit }})</p>
+            </div>
+            <div class="metric-card">
+              <p class="label">Integrando / dato</p>
+              <p class="text-lg font-bold text-slate-900">{{ graphYLabel }}</p>
+              <p class="mt-1 text-xs text-slate-500">{{ current.yUnit || 'adimensional' }}</p>
+            </div>
+            <div class="rounded-xl border border-teal-100 bg-teal-50 p-4">
+              <p class="text-xs font-bold uppercase tracking-wider text-teal-700">Objetivo</p>
+              <p class="mt-1 text-sm font-bold leading-6 text-teal-950">{{ current.objective }}</p>
+            </div>
+          </div>
+
+          <div class="formula math">{{ formulaExplanation }}</div>
+
+          <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm leading-6 text-indigo-950">
+            <strong>Lectura académica:</strong> el área bajo la curva representa la magnitud buscada después de respetar
+            las unidades y, cuando corresponde, aplicar el factor de conversión indicado por el problema.
+          </div>
+        </div>
+      </article>
+
+      <article class="card overflow-hidden">
+        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <p class="kicker">Configuración</p>
+          <h2 class="mt-1 text-xl font-black text-slate-900">Método y resultado</h2>
+        </div>
+        <div class="p-5">
+          <label class="label">Método numérico</label>
+          <select class="data-input" [(ngModel)]="method" (ngModelChange)="calculate()">
+            <option *ngFor="let item of methods" [ngValue]="item.id">{{ item.label }}</option>
+          </select>
+
+          <div *ngIf="current.id === 27" class="mt-5">
+            <label class="label">Magnitud del ejercicio 27</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" class="btn-secondary" [ngClass]="current.specialMode === 'volume' ? '!border-teal-700 !bg-teal-50 !text-teal-800' : ''" (click)="setSpecialMode('volume')">Volumen</button>
+              <button type="button" class="btn-secondary" [ngClass]="current.specialMode === 'surface' ? '!border-teal-700 !bg-teal-50 !text-teal-800' : ''" (click)="setSpecialMode('surface')">Superficie simplificada</button>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-xl border p-4 text-sm leading-6" [ngClass]="integration?.valid ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'">
+            <strong>{{ integration?.valid ? 'Validación correcta.' : 'Configuración no compatible.' }}</strong>
+            <div class="mt-1">{{ validationMessage }}</div>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-50 p-5">
+            <p class="text-xs font-bold uppercase tracking-[0.14em] text-teal-700">{{ currentResultLabel }}</p>
+            <p class="mt-2 break-all text-3xl font-black tracking-tight text-teal-950">{{ format(currentValue) }}</p>
+            <p class="mt-1 text-sm font-semibold text-teal-800">{{ currentResultUnit }}</p>
+            <p *ngIf="equivalentText" class="mt-3 rounded-lg bg-white/80 px-3 py-2 text-xs font-bold text-slate-700">
+              Equivalencia: {{ equivalentText }}
+            </p>
+          </div>
+
+          <div *ngIf="referenceValue !== null" class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div class="metric-card">
+              <p class="label">Referencia</p>
+              <p class="font-mono text-sm font-bold text-slate-900">{{ format(referenceValue) }}</p>
+            </div>
+            <div class="metric-card">
+              <p class="label">Error porcentual</p>
+              <p class="font-mono text-sm font-bold text-slate-900">{{ format(percentError()) }}%</p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="current.kind === 'table'" class="card overflow-hidden">
+      <div class="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div>
+          <p class="kicker">Datos de entrada</p>
+          <h2 class="section-title mt-1">Tabla editable</h2>
+          <p class="mt-1 text-xs text-slate-500">Los valores permanecen editables sin reconstruir las filas mientras escribes.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn-secondary" type="button" (click)="addPoint()">+ Agregar punto</button>
+          <button class="btn-secondary" type="button" (click)="restoreCurrent()">Restaurar</button>
+        </div>
+      </div>
+
+      <div *ngIf="current.id === 26" class="border-b border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900 sm:px-6">
+        <strong>Ejercicio 26:</strong> el solucionario no proporciona las anchuras digitalizadas del mapa. Se mantienen los x cada 20 mi,
+        pero las anchuras se dejan vacías para que sean introducidas desde la figura original; así no se inventa una solución numérica.
+      </div>
+
+      <div class="overflow-x-auto p-5 sm:p-6">
+        <table class="w-full min-w-[650px] text-sm">
+          <thead class="bg-slate-900 text-xs uppercase tracking-wider text-slate-300">
+            <tr>
+              <th class="px-3 py-3 text-left">i</th>
+              <th class="px-3 py-3 text-left">{{ current.xLabel }} {{ current.xUnit ? '(' + current.xUnit + ')' : '' }}</th>
+              <th class="px-3 py-3 text-left">{{ current.yLabel }} {{ current.yUnit ? '(' + current.yUnit + ')' : '' }}</th>
+              <th *ngIf="current.id === 27" class="px-3 py-3 text-left">Integrando actual</th>
+              <th class="px-3 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let point of current.points ?? []; let i = index; trackBy: trackByPoint" class="border-t border-slate-100 hover:bg-slate-50">
+              <td class="px-3 py-2.5 font-mono font-bold text-slate-500">{{ i }}</td>
+              <td class="px-3 py-2.5">
+                <input class="data-input-compact" type="number" [(ngModel)]="point.x" (ngModelChange)="calculate()">
+              </td>
+              <td class="px-3 py-2.5">
+                <input class="data-input-compact" type="number" [(ngModel)]="point.y" (ngModelChange)="calculate()" [placeholder]="current.id === 26 ? 'Ingresar ancho' : ''">
+              </td>
+              <td *ngIf="current.id === 27" class="px-3 py-2.5 font-mono text-xs text-slate-600">
+                {{ format(graphNodes[i]?.y) }}
+              </td>
+              <td class="px-3 py-2.5 text-center">
+                <button class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100" type="button" (click)="removePoint(i)">Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="current.kind === 'function'" class="card overflow-hidden">
+      <div class="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div>
+          <p class="kicker">Modelo matemático</p>
+          <h2 class="section-title mt-1">Función, intervalo y parámetros editables</h2>
+        </div>
+        <button class="btn-secondary" type="button" (click)="restoreCurrent()">Restaurar valores</button>
+      </div>
+      <div class="grid gap-5 p-5 sm:p-6 lg:grid-cols-2">
+        <div class="lg:col-span-2">
+          <label class="label">Función a integrar</label>
+          <input class="data-input font-mono" type="text" [(ngModel)]="current.formula" (ngModelChange)="calculate()">
+          <p class="mt-2 text-xs leading-5 text-slate-500">
+            Sintaxis admitida: +, −, *, /, ^, paréntesis, pi y funciones sin, cos, sinh, cosh, sqrt, exp, log, abs y pow.
+          </p>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3 lg:col-span-2">
+          <div>
+            <label class="label">Límite inferior a</label>
+            <input class="data-input" type="number" [(ngModel)]="current.lower" (ngModelChange)="calculate()">
+          </div>
+          <div>
+            <label class="label">Límite superior b</label>
+            <input class="data-input" type="number" [(ngModel)]="current.upper" (ngModelChange)="calculate()">
+          </div>
+          <div>
+            <label class="label">Subintervalos n</label>
+            <input class="data-input" type="number" min="1" step="1" [(ngModel)]="current.n" (ngModelChange)="calculate()">
+          </div>
+        </div>
+
+        <div *ngFor="let parameter of current.parameters ?? []; trackBy: trackByParameter">
+          <label class="label">{{ parameter.label }}</label>
+          <div class="relative">
+            <input class="data-input pr-16" type="number" [attr.step]="parameter.step ?? 'any'" [(ngModel)]="parameter.value" (ngModelChange)="calculate()">
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{{ parameter.unit }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="errorMessage" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950 shadow-academic">
+      <strong>Revisión necesaria:</strong> {{ errorMessage }}
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+      <article class="card overflow-hidden">
+        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+          <p class="kicker">Visualización</p>
+          <h2 class="section-title mt-1">Curva e interpretación del área</h2>
+        </div>
+        <div class="p-4 sm:p-6">
+          <div *ngIf="graphCurve.length; else noGraph" class="overflow-x-auto">
+            <svg viewBox="0 0 850 350" class="min-w-[680px] rounded-xl border border-slate-200 bg-white">
+              <defs>
+                <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0f766e" stop-opacity="0.28" />
+                  <stop offset="100%" stop-color="#0f766e" stop-opacity="0.03" />
+                </linearGradient>
+              </defs>
+
+              <g *ngFor="let tick of gridTicks; trackBy: trackByIndex">
+                <line [attr.x1]="66" [attr.x2]="784" [attr.y1]="yTickY(tick)" [attr.y2]="yTickY(tick)" stroke="#e2e8f0" stroke-width="1" />
+                <text x="57" [attr.y]="yTickY(tick) + 4" text-anchor="end" font-size="10" fill="#64748b">{{ format(yTickValue(tick), 2) }}</text>
+                <line [attr.x1]="xTickX(tick)" [attr.x2]="xTickX(tick)" y1="40" y2="306" stroke="#f1f5f9" stroke-width="1" />
+                <text [attr.x]="xTickX(tick)" y="327" text-anchor="middle" font-size="10" fill="#64748b">{{ format(xTickValue(tick), 2) }}</text>
+              </g>
+
+              <line x1="66" x2="784" [attr.y1]="sy(0)" [attr.y2]="sy(0)" stroke="#94a3b8" stroke-width="1.2" />
+              <path [attr.d]="areaPath" fill="url(#areaFill)" />
+              <path [attr.d]="curvePath" fill="none" stroke="#0f766e" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+
+              <circle *ngFor="let point of graphNodes; trackBy: trackByIndex" [attr.cx]="sx(point.x)" [attr.cy]="sy(point.y)" r="4.3" fill="#4f46e5" stroke="white" stroke-width="2" />
+
+              <text x="425" y="345" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">
+                {{ current.xLabel }} ({{ current.xUnit }})
+              </text>
+            </svg>
+          </div>
+          <ng-template #noGraph>
+            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+              Complete o corrija los datos para generar la gráfica.
+            </div>
+          </ng-template>
+          <p class="mt-4 text-xs leading-5 text-slate-500">
+            El sombreado representa visualmente el área integrada. Los puntos violetas corresponden a los nodos usados por el método numérico.
+          </p>
+        </div>
+      </article>
+
+      <article class="card overflow-hidden">
+        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <p class="kicker">Comparación</p>
+          <h2 class="section-title mt-1">Métodos compatibles</h2>
+        </div>
+        <div class="overflow-x-auto p-5">
+          <table class="w-full min-w-[440px] text-sm">
+            <thead class="bg-slate-900 text-xs uppercase tracking-wider text-slate-300">
+              <tr>
+                <th class="px-3 py-3 text-left">Método</th>
+                <th class="px-3 py-3 text-right">Resultado</th>
+                <th *ngIf="referenceValue !== null" class="px-3 py-3 text-right">Error %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of comparison" class="border-t border-slate-100" [ngClass]="item.method === method ? 'bg-teal-50' : 'hover:bg-slate-50'">
+                <td class="px-3 py-3 font-semibold text-slate-700">{{ item.label }}</td>
+                <td class="px-3 py-3 text-right font-mono text-slate-900">{{ format(comparisonValue(item)) }}</td>
+                <td *ngIf="referenceValue !== null" class="px-3 py-3 text-right font-mono text-slate-600">{{ format(comparisonPercentError(item)) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="!comparison.length" class="border-t border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+          No existen resultados comparables hasta corregir o completar los datos.
+        </div>
+      </article>
+    </section>
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+        <p class="kicker">Desarrollo numérico</p>
+        <h2 class="section-title mt-1">Tabla de pesos y contribuciones</h2>
+      </div>
+      <div *ngIf="integration?.valid; else invalidTable" class="overflow-x-auto p-5 sm:p-6">
+        <table class="w-full min-w-[720px] text-sm">
+          <thead class="bg-slate-900 text-xs uppercase tracking-wider text-slate-300">
+            <tr>
+              <th class="px-3 py-3 text-left">i</th>
+              <th class="px-3 py-3 text-right">xᵢ</th>
+              <th class="px-3 py-3 text-right">f(xᵢ)</th>
+              <th class="px-3 py-3 text-right">Peso efectivo</th>
+              <th class="px-3 py-3 text-right">Peso × f(xᵢ)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of integration?.rows ?? []; trackBy: trackByIndex" class="border-t border-slate-100 hover:bg-slate-50">
+              <td class="px-3 py-2.5 font-mono font-bold text-slate-500">{{ row.i }}</td>
+              <td class="px-3 py-2.5 text-right font-mono">{{ format(row.x) }}</td>
+              <td class="px-3 py-2.5 text-right font-mono">{{ format(row.fx) }}</td>
+              <td class="px-3 py-2.5 text-right font-mono">{{ format(row.weight) }}</td>
+              <td class="px-3 py-2.5 text-right font-mono font-semibold text-slate-900">{{ format(row.contribution) }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-slate-300 bg-slate-50 font-bold">
+            <tr>
+              <td colspan="4" class="px-3 py-3 text-right">Integral numérica antes de conversiones:</td>
+              <td class="px-3 py-3 text-right font-mono">{{ format(integration?.value) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p *ngIf="current.id === 19" class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-950">
+          En el ejercicio 19, la integral se obtiene en mi/h·s. Para expresar distancia en millas se multiplica por 1/3600.
+        </p>
+      </div>
+      <ng-template #invalidTable>
+        <div class="p-6 text-sm text-slate-500">La tabla aparecerá cuando la configuración del método sea válida.</div>
+      </ng-template>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+      <article class="card overflow-hidden">
+        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <p class="kicker">Interpretación</p>
+          <h2 class="section-title mt-1">Observaciones del ejercicio</h2>
+        </div>
+        <div class="space-y-3 p-5 text-sm leading-6 text-slate-600">
+          <div *ngFor="let note of current.notes" class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            {{ note }}
+          </div>
+        </div>
+      </article>
+
+      <article class="card overflow-hidden">
+        <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <p class="kicker">Prueba mínima</p>
+          <h2 class="section-title mt-1">Validación con f(x)=x²</h2>
+        </div>
+        <div class="p-5 text-sm leading-7 text-slate-600">
+          <p>Para <span class="math font-bold">∫₀²x²dx = 8/3 ≈ 2.666666667</span>, la aplicación debe reproducir:</p>
+          <div class="mt-4 overflow-x-auto">
+            <table class="w-full min-w-[420px] text-sm">
+              <thead class="bg-slate-900 text-xs uppercase text-slate-300">
+                <tr><th class="px-3 py-2">n</th><th class="px-3 py-2">Trapecio</th><th class="px-3 py-2">Simpson 1/3</th></tr>
+              </thead>
+              <tbody>
+                <tr class="border-t"><td class="px-3 py-2 text-center">4</td><td class="px-3 py-2 text-center font-mono">2.750000</td><td class="px-3 py-2 text-center font-mono">2.666667</td></tr>
+                <tr class="border-t"><td class="px-3 py-2 text-center">8</td><td class="px-3 py-2 text-center font-mono">2.687500</td><td class="px-3 py-2 text-center font-mono">2.666667</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-4">La prueba muestra la convergencia del trapecio y la exactitud de Simpson 1/3 para un polinomio cuadrático.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 via-white to-indigo-50 shadow-academic">
+      <div class="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+        <div>
+          <p class="kicker">Conclusión del ejercicio activo</p>
+          <h2 class="section-title mt-1">{{ current.title }}</h2>
+          <p class="mt-3 max-w-5xl text-sm leading-7 text-slate-700">
+            Con <strong>{{ methodLabel }}</strong>, el resultado obtenido es
+            <strong>{{ format(currentValue) }} {{ currentResultUnit }}</strong>.
+            <ng-container *ngIf="referenceValue !== null && currentValue !== null">
+              Frente al valor de referencia {{ format(referenceValue) }}, el error porcentual es {{ format(percentError()) }}%.
+            </ng-container>
+            La interpretación final depende de las unidades, de la calidad de los datos y del cumplimiento de las condiciones de cada regla de integración.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-slate-950 px-6 py-5 text-center text-white shadow-academic-lg">
+          <p class="text-xs font-bold uppercase tracking-wider text-teal-300">Resultado</p>
+          <p class="mt-1 text-2xl font-black">{{ format(currentValue) }}</p>
+          <p class="text-xs text-slate-300">{{ currentResultUnit }}</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white/80">
+    <div class="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+      <span>COM-254 · Métodos Numéricos · Integración aplicada</span>
+      <span>Angular 21 · TypeScript 5.9 · Tailwind CSS 3.4</span>
+    </div>
+  </footer>
+
+  <div *ngIf="modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" (click)="closeModal()">
+    <div class="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-5">
+        <div>
+          <p class="kicker">Fundamento académico</p>
+          <h3 class="mt-1 text-xl font-black text-slate-900">
+            {{ modal === 'methods' ? 'Métodos de integración' : modal === 'validation' ? 'Condiciones y validación' : modal === 'exercise' ? 'Criterio de la práctica' : 'Limitaciones del modelo' }}
+          </h3>
+        </div>
+        <button class="btn-secondary" type="button" (click)="closeModal()">Cerrar</button>
+      </div>
+
+      <div class="p-5 text-sm leading-7 text-slate-600 sm:p-6">
+        <ng-container *ngIf="modal === 'methods'">
+          <p><strong>Trapecio compuesto:</strong> aproxima cada tramo mediante una recta y suma las áreas trapezoidales.</p>
+          <div class="formula math mt-3">T = h[(f₀+fₙ)/2 + Σ fᵢ]</div>
+          <p class="mt-4"><strong>Simpson 1/3:</strong> usa aproximaciones parabólicas y exige n par.</p>
+          <div class="formula math mt-3">S₁/₃ = (h/3)[f₀+fₙ+4Σfᵢ(impar)+2Σfᵢ(par)]</div>
+          <p class="mt-4"><strong>Simpson 3/8:</strong> exige n múltiplo de 3.</p>
+          <div class="formula math mt-3">S₃/₈ = (3h/8)[f₀+fₙ+3Σfᵢ(no múlt.3)+2Σfᵢ(múlt.3)]</div>
+        </ng-container>
+
+        <ng-container *ngIf="modal === 'validation'">
+          <p>La aplicación revisa que los nodos sean crecientes y equidistantes, que n sea entero positivo y que la regla seleccionada sea compatible.</p>
+          <p class="mt-3"><strong>Simpson 1/3:</strong> n debe ser par. <strong>Simpson 3/8:</strong> n debe ser múltiplo de 3.</p>
+          <p class="mt-3">Con n impar mayor o igual a 5 puede emplearse la combinación 1/3 en n−3 intervalos y 3/8 en los últimos 3.</p>
+        </ng-container>
+
+        <ng-container *ngIf="modal === 'exercise'">
+          <p>La práctica combina problemas con datos tabulados y problemas definidos por una función. El objetivo no es solamente obtener un número, sino justificar la integral, las unidades, la regla aplicada y el error cuando exista una referencia.</p>
+          <p class="mt-3">Los escenarios vinculados con La Paz son adaptaciones didácticas; no deben interpretarse como mediciones reales de Bolivia.</p>
+        </ng-container>
+
+        <ng-container *ngIf="modal === 'limitations'">
+          <p><strong>Ejercicio 26:</strong> sin la tabla de anchuras digitalizadas no existe una única solución numérica reproducible; por eso la aplicación no inventa valores.</p>
+          <p class="mt-3"><strong>Ejercicio 27:</strong> la expresión 2π∫r dz es una simplificación. El área real de revolución necesita el factor √(1+(r′)²).</p>
+          <p class="mt-3">Modificar una función o sus parámetros puede cambiar la validez de una referencia analítica previamente conocida; la aplicación recalcula las referencias de los ejercicios funcionales principales.</p>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

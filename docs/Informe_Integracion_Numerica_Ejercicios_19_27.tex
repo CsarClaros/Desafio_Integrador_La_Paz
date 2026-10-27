@@ -1,0 +1,188 @@
+% ============================================================================
+% INFORME TECNICO - COM-254 METODOS NUMERICOS
+% Integracion numerica: ejercicios 19 al 27
+% Autor: Cesar Raymundo Claros Choquemisa
+% Compilacion sugerida: pdflatex
+% ============================================================================
+\documentclass[10pt,letterpaper,oneside]{article}
+
+% --- Idioma y tipografia -----------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+
+% --- Pagina y presentacion ---------------------------------------------------
+\usepackage[letterpaper,top=1.65cm,bottom=1.65cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[most]{tcolorbox}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+
+% --- Datos -------------------------------------------------------------------
+\newcommand{\Universidad}{Universidad Mayor de San Andrés}
+\newcommand{\Facultad}{Facultad de Ciencias Puras y Naturales}
+\newcommand{\Carrera}{Carrera de Informática}
+\newcommand{\Materia}{COM--254 Métodos Numéricos}
+\newcommand{\Estudiante}{Cesar Raymundo Claros Choquemisa}
+\newcommand{\Docente}{Lic. Brigida Carvajal}
+\newcommand{\TituloInforme}{Integración numérica aplicada: ejercicios 19--27}
+\newcommand{\FechaInforme}{La Paz, octubre de 2026}
+
+% --- Estilo ------------------------------------------------------------------
+\definecolor{azulprofundo}{HTML}{19364F}
+\definecolor{azulsuave}{HTML}{EFF5F9}
+\definecolor{gristexto}{HTML}{56616A}
+\definecolor{grisfondo}{HTML}{F6F7F8}
+\definecolor{verdeestado}{HTML}{276B54}
+\hypersetup{colorlinks=true,linkcolor=azulprofundo,urlcolor=azulprofundo}
+\setlength{\parindent}{0.55cm}
+\setlength{\parskip}{0.18em}
+\setstretch{1.02}
+\setlist[itemize]{leftmargin=1.3em,topsep=2pt,itemsep=1pt,parsep=0pt}
+\titleformat{\section}{\large\bfseries\color{azulprofundo}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{azulprofundo}}{\thesubsection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+\titlespacing*{\subsection}{0pt}{4pt}{2pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize Integración numérica -- ejercicios 19--27}
+\fancyhead[R]{\footnotesize \Materia}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\headheight}{13pt}
+
+\newtcolorbox{nota}[1][]{
+ colback=azulsuave,colframe=azulprofundo,boxrule=0.45pt,
+ arc=1mm,left=2mm,right=2mm,top=1.5mm,bottom=1.5mm,#1}
+\newtcolorbox{resultado}[1][]{
+ colback=green!4,colframe=verdeestado,boxrule=0.45pt,
+ arc=1mm,left=2mm,right=2mm,top=1.5mm,bottom=1.5mm,#1}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\begin{document}
+\thispagestyle{fancy}
+
+% --- Encabezado compacto ------------------------------------------------------
+\begin{center}
+{\small \Universidad\ -- \Facultad\ -- \Carrera\par}
+\vspace{2pt}
+{\Large\bfseries\color{azulprofundo}\TituloInforme\par}
+\vspace{4pt}
+\begin{tabular}{@{}rl@{\hspace{1.1cm}}rl@{}}
+\textbf{Estudiante:} & \Estudiante & \textbf{Materia:} & \Materia\\
+\textbf{Docente:} & \Docente & \textbf{Fecha:} & \FechaInforme
+\end{tabular}
+\end{center}
+\vspace{2pt}\hrule\vspace{5pt}
+
+\section{Problema, modelo y procedimiento}
+El desafío integra nueve ejercicios de aplicación mediante las reglas del
+\textbf{trapecio compuesto}, \textbf{Simpson 1/3} y \textbf{Simpson 3/8}. Los
+problemas incluyen transporte, elasticidad, geometría, fluidos y energía. Para
+los datos tabulados se verifica que los nodos sean crecientes y equidistantes;
+para las funciones se definen los límites $[a,b]$ y el número de subintervalos
+$n$, con $h=(b-a)/n$.
+
+Las expresiones utilizadas son
+\[
+T=h\left[\frac{f_0+f_n}{2}+\sum_{i=1}^{n-1}f_i\right],
+\]
+\[
+S_{1/3}=\frac{h}{3}\left[f_0+f_n+4\!\sum_{i\,\mathrm{impar}}f_i
++2\!\sum_{i\,\mathrm{par\ interior}}f_i\right],
+\]
+\[
+S_{3/8}=\frac{3h}{8}\left[f_0+f_n+3\!\sum_{i\not\equiv0\,(3)}f_i
++2\!\sum_{i\equiv0\,(3)}f_i\right].
+\]
+Simpson 1/3 requiere $n$ par y Simpson 3/8 requiere $n$ múltiplo de 3. Cuando
+$n=7$, se emplea una regla combinada: cuatro subintervalos con Simpson 1/3 y los
+tres restantes con Simpson 3/8. Si existe un valor de referencia $I_{ref}$, se
+calcula $E_a=|I_{ref}-I_{aprox}|$ y
+$E\%=100E_a/|I_{ref}|$.
+
+\begin{nota}
+Los escenarios de La Paz son adaptaciones didácticas. En el ejercicio 26 no se
+proporciona una tabla oficial de anchuras; por ello no se inventaron datos y se
+conserva únicamente el área de referencia de $9940\,\mathrm{mi}^2$ hasta ingresar
+las mediciones digitalizadas.
+\end{nota}
+
+\section{Resultados de los ejercicios 19--27}
+\renewcommand{\arraystretch}{1.15}
+\scriptsize
+\begin{tabularx}{\textwidth}{@{}c Y >{\raggedleft\arraybackslash}p{2.65cm} >{\raggedleft\arraybackslash}p{2.85cm}@{}}
+\toprule
+\textbf{Ej.} & \textbf{Magnitud / modelo} & \textbf{Trapecio} & \textbf{Simpson / referencia}\\
+\midrule
+19 & $d=\int_0^7v(t)\,dt$, conversión s$\rightarrow$h & $0.147083$ mi & $0.147072$ mi (combinado)\\
+20 & $W=\int_0^{2.8}F(x)\,dx$ & $4.544000$ lb$\cdot$in & $4.577167$ lb$\cdot$in $\approx0.517150$ J\\
+21 & $A=\int_1^{10}y(x)\,dx$ & $36.400000$ u$^2$ & $36.850000$ u$^2$ (1/3 + trap.)\\
+22 & $L=\int_{-12}^{26}\cosh(x/24)\,dx$ & $44.042044$ ft & $43.899213$ ft; exacto $43.898841$\\
+23 & $Q=\int_0^{0.25}160\pi r(1-r/0.25)^{1/7}dr$ & $11.681778$ in$^3$/s & $12.151244$; exacto $12.828170$\\
+24 & $L=\int_0^{2\pi}20\sin(t/2)\,dt$ & $78.969264$ & $80.010767$; exacto $80$\\
+25 & $\Delta U=\int_0^{800000}\!mg_0R^2/(R+y)^2\,dy$ & $3.48662008\!\times\!10^9$ J & $3.48623690\!\times\!10^9$ J; ref. $3.486236787\!\times\!10^9$\\
+26 & $A=\int_{40}^{260}w(x)\,dx$ & Depende de anchuras & Referencia: $9940$ mi$^2$\\
+27 & $V=\pi\int_0^{12}(d/2)^2dz$ & $199.404740$ in$^3$ & $201.842092$ in$^3$ (1/3)\\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\newpage
+\section{Comparación, errores y aplicación web}
+En los ejercicios con solución analítica se observa una mejora clara al aplicar
+Simpson 1/3 con $n=8$. Para la catenaria (22), el error porcentual disminuye de
+aproximadamente $0.326212\%$ con trapecio a $0.000848\%$ con Simpson 1/3. En la
+cardioide (24), los errores son aproximadamente $1.288420\%$ y $0.013458\%$,
+respectivamente. En energía gravitatoria (25), Simpson 1/3 produce un error del
+orden de $3.24\times10^{-6}\%$. El ejercicio 23 converge más lentamente debido al
+comportamiento del perfil cerca de la pared de la tubería.
+
+Para el ejercicio 27 también se evaluó la expresión simplificada
+$S=2\pi\int r\,dz$, obteniéndose $159.278748\,\mathrm{in}^2$ por trapecio y
+$162.315620\,\mathrm{in}^2$ por Simpson 1/3. Esta expresión \textbf{no representa
+el área superficial exacta}, pues la superficie de revolución requiere
+\[
+S=2\pi\int r(z)\sqrt{1+[r'(z)]^2}\,dz.
+\]
+
+La aplicación desarrollada en \textbf{Angular, TypeScript y Tailwind CSS} organiza
+los nueve problemas mediante un selector. Cada ejercicio conserva sus datos y
+permite modificar tablas, límites, $n$, parámetros e incluso la función en los
+casos analíticos. El sistema valida el espaciado uniforme, la compatibilidad de
+$n$ con cada regla, datos no numéricos y orden de los nodos. Además, muestra la
+tabla de pesos efectivos, las contribuciones, el gráfico del integrando con el
+área sombreada, comparación de métodos y errores cuando existe referencia.
+
+\begin{resultado}
+\textbf{Prueba de validación del código.} Para
+$\int_0^2 x^2dx=8/3=2.666666\ldots$, con $n=4$ se obtiene
+$T=2.750000$ y $S_{1/3}=2.666667$; con $n=8$, $T=2.687500$ y
+$S_{1/3}=2.666667$. Esto verifica la implementación básica y muestra la
+convergencia del trapecio.
+\end{resultado}
+
+\section{Conclusiones}
+Los resultados muestran que la elección del método depende tanto de la forma del
+integrando como del número de subintervalos disponible. El trapecio ofrece una
+aproximación general y sencilla, mientras que Simpson 1/3 alcanza mayor precisión
+en los ejercicios suaves donde su condición de $n$ par se cumple. La combinación
+de Simpson 1/3 y 3/8 permite aprovechar los siete subintervalos de los ejercicios
+19 y 20 sin descartar datos.
+
+La comparación con valores analíticos confirma que un resultado numérico debe
+acompañarse de unidades, condiciones de aplicación y una medida de error cuando
+sea posible. Finalmente, el ejercicio 26 evidencia una limitación esencial: un
+método numérico no puede compensar la ausencia de datos de entrada confiables;
+sin anchuras digitalizadas comunes no existe una única respuesta reproducible.
+
+\end{document}

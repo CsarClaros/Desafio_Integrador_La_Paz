@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/integracion-numerica-la-paz/browser",
+  "framework": "angular"
+}
